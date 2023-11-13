@@ -1,9 +1,9 @@
 import pytholog as pl
 
 
-def main():
+def initial_knowledge_base() -> pl.KnowledgeBase:
     kbase = pl.KnowledgeBase('factorio')
-    kbase([
+    return kbase([
         "raw_ingredient(copper_ore).",
         "raw_ingredient(iron_ore).",
         "raw_ingredient(wood).",
@@ -52,6 +52,68 @@ def main():
         "craftable_item(X): - starting_craft_item(X); studied_craft_item(X).",
         "unstadied_craft_item(X): - technology(X, Y),  \\+ studied(Y)."
     ])
+
+
+class Console:
+    def __init__(self, kbase: pl.KnowledgeBase):
+        self.__russifier: dict = {
+            "медная руда": "raw_ingredient(copper_ore).",
+            "железная руда": "raw_ingredient(iron_ore).",
+            "дерево": "raw_ingredient(wood).",
+            "камень": "raw_ingredient(stone).",
+            "медная плита": "item(copper_plate).",
+            "железная плита": "item(iron_plate).",
+            "кирпич": "item(stone_brick).",
+            "медный провод": "item(copper_cable).",
+            "деревянный ящик": "item(wooden_chest).",
+            "железный ящик": "item(iron_chest).",
+            "шестерня": "item(iron_gear_wheel).",
+            "каменная печь": "item(stone_furnace).",
+            "конвеер": "item(transport_belt).",
+            "печатная плата": "item(electronic_circuit).",
+            "стена": "item(wall).",
+            "туррель": "item(gun_turret).",
+            "научный пакет автоматизации": "item(automation_science_pack).",
+            "технология стен": "technology(wall, wall_technology).",
+            "технология туррелей": "technology(gun_turret, turrets_technology).",
+        }
+        raw_ingredients: tuple = (
+            "медная руда",
+            "железная руда",
+            "дерево",
+            "камень",
+        )
+        items: tuple = (
+            ""
+        )
+        technologies: tuple = (
+            ""
+        )
+        self.__kbase = kbase
+        self.__info_string: str = self.__compile_info_string()
+
+    def __compile_info_string(self) -> str:
+        pass
+
+    def io(self):
+        string: str = input("Введите запрос...\n")
+        """
+        Шаблоны запросов
+        Я хочу что-то сделать из: ... топливо + сырой материал -> жарка
+        ингредиенты -> вещь которая получается, то что получается из всех вещей которые можно скрафтить
+        Используя ... ты получишь ...
+        Скрафтив ... <и используя> ты получишь ...
+        Изучив технологию, ты сможешь скрафтить ...
+        Я хочу что-то сделать из: ...; У меня изучены технологии ...
+        """
+        while string != "exit":
+            print(f"Введено {string}")
+            string: str = input("Введите запрос...\n")
+
+
+def main():
+    initial_knowledge_base()
+    io()
 
 
 if __name__ == '__main__':
