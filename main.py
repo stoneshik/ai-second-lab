@@ -44,13 +44,15 @@ def initial_knowledge_base() -> pl.KnowledgeBase:
         "ingredient(stone_brick, wall).",
         "ingredient(iron_plate, gun_turret).",
 
-        "technology(wall, wall_technology).",
-        "technology(gun_turret, turrets_technology).",
+        "technology(wall_technology).",
+        "technology(turrets_technology).",
+        "technology_relation(wall, wall_technology).",
+        "technology_relation(gun_turret, turrets_technology).",
 
-        "starting_craft_item(X): - item(X),  \\+ technology(X, _).",
-        "studied_craft_item(X): - technology(X, Y), studied(Y).",
+        "starting_craft_item(X): - item(X),  \\+ technology_relation(X, _).",
+        "studied_craft_item(X): - technology_relation(X, Y), studied(Y).",
         "craftable_item(X): - starting_craft_item(X); studied_craft_item(X).",
-        "unstadied_craft_item(X): - technology(X, Y),  \\+ studied(Y)."
+        "unstadied_craft_item(X): - technology_relation(X, Y),  \\+ studied(Y)."
     ])
     return kbase
 
@@ -78,32 +80,14 @@ class KBaseWrapper:
             "технология стен": "wall_technology",
             "технология туррелей": "turrets_technology",
         }
-        self.__raw_ingredients: tuple = (
-            "медная руда",
-            "железная руда",
-            "дерево",
-            "камень",
-        )
-        self.__items: tuple = (
-            "медная плита",
-            "железная плита",
-            "кирпич",
-            "медный провод",
-            "деревянный ящик",
-            "железный ящик",
-            "шестерня",
-            "каменная печь",
-            "конвеер",
-            "печатная плата",
-            "стена",
-            "туррель",
-            "научный пакет автоматизации",
-        )
-        self.__technologies: tuple = (
-            "технология стен",
-            "технология туррелей",
-        )
+        self.__russifier_inverse: dict = {value: key for key, value in zip(self.__russifier.keys(), self.__russifier.values())}
         self.__kbase = kbase
+        self.__raw_ingredients: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
+                                               [x['X.'] for x in self.make_query('raw_ingredient(X).')]])
+        self.__items: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
+                                               [x['X.'] for x in self.make_query('item(X).')]])
+        self.__technologies: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
+                                               [x['X.'] for x in self.make_query('technology(X).')]])
         self.__info_string: str = self.__compile_info_string()
 
     @property
