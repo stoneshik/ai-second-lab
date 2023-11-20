@@ -56,11 +56,17 @@ class PrologWrapper:
     def make_query(self, query_string: str) -> [list, None]:
         return self.__prolog.query(query_string)
 
+    def is_key_string_in_russifier(self, key_string) -> bool:
+        return key_string in self.__russifier.keys()
+
 
 class Console:
     def __init__(self, prolog_wrapper: PrologWrapper):
         self.__prolog_wrapper: PrologWrapper = prolog_wrapper
 
+    def __show_error_message(self, message: str) -> None:
+        print(message)
+        print("Формат ввода неправильный, повторите ввод...")
 
     def __parsing_items(self, string_items: str) -> [list, None]:
         items_regexp = re.compile(r"У меня есть: (?:[а-яА-Я ]+(?:[ ]*,[ ]*)?)+")
@@ -75,6 +81,14 @@ class Console:
             return None
         technologies: list = [string.strip() for string in string_technologies.split(':')[1].strip().split(',')]
         return technologies
+
+    def __finding_wrong_item_names(self, items: list) -> list:
+        return [item for item in items
+                if item not in self.__prolog_wrapper.is_key_string_in_russifier(item)]
+
+    def __finding_wrong_technology_names(self, technologies: list) -> list:
+        return [technology for technology in technologies
+                if technology not in self.__prolog_wrapper.is_key_string_in_russifier(technology)]
 
     def io(self):
         """
@@ -94,20 +108,26 @@ class Console:
                 return
             strings: list = raw_string.split(';')
             if len(strings) > 2:
-                print("Формат ввода неправильный, повторите ввод...")
+                self.__show_error_message('Использовано несколько точек с запятой')
                 continue
             items: list = self.__parsing_items(strings[0].strip())
             if items is None:
-                print("Формат ввода неправильный, повторите ввод...")
+                self.__show_error_message('Ошибка в первой части строки')
                 continue
 
             if len(strings) == 2:
                 technologies: list = self.__parsing_technologies(strings[1].strip())
                 if technologies is None:
-                    print("Формат ввода неправильный, повторите ввод...")
+                    self.__show_error_message('Ошибка во второй части строки')
                     continue
             else:
                 technologies: list = []
+            wrong_items: list = self.__finding_wrong_item_names(items)
+            wrong_technologies: list = self.__finding_wrong_technology_names(technologies)
+            if len(wrong_items) > 0 or len(wrong_technologies) > 0:
+                self.__show_error_message(
+                    f"Ошибка в следующих названиях {', '.join(wrong_items)}{', '.join(wrong_technologies)}"
+                )
 
 
 def main():
