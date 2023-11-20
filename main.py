@@ -61,6 +61,21 @@ class Console:
     def __init__(self, prolog_wrapper: PrologWrapper):
         self.__prolog_wrapper: PrologWrapper = prolog_wrapper
 
+
+    def __parsing_items(self, string_items: str) -> [list, None]:
+        items_regexp = re.compile(r"У меня есть: (?:[а-яА-Я ]+(?:[ ]*,[ ]*)?)+")
+        if re.match(items_regexp, string_items) is None:
+            return None
+        items: list = [string.strip() for string in string_items.split(':')[1].strip().split(',')]
+        return items
+
+    def __parsing_technologies(self, string_technologies: str) -> [list, None]:
+        technologies_regexp = re.compile(r"Изучены технологии: (?:[а-яА-Я ]+(?:[ ]*,[ ]*)?)+")
+        if re.match(technologies_regexp, string_technologies) is None:
+            return None
+        technologies: list = [string.strip() for string in string_technologies.split(':')[1].strip().split(',')]
+        return technologies
+
     def io(self):
         """
         Шаблоны запросов
@@ -73,8 +88,6 @@ class Console:
         """
         print(self.__prolog_wrapper.info_string)
         print("Формат запроса:\nУ меня есть: первый предмет, второй предмет; Изучены технологии: технология")
-        items_regexp = re.compile(r"У меня есть: (?:[ ]*([а-яА-Я ]+),[ ]*)*(?:[ ]*([а-яА-Я ]+)[ ]*)+")
-        technologies_regexp = re.compile(r"Изучены технологии: (?:[ ]*([а-яА-Я ]+),[ ]*)*(?:[ ]*([а-яА-Я ]+)[ ]*)+")
         while True:
             raw_string: str = input("Введите запрос (чтобы завершить работу введите exit)...\n").strip()
             if raw_string == "exit":
@@ -83,12 +96,18 @@ class Console:
             if len(strings) > 2:
                 print("Формат ввода неправильный, повторите ввод...")
                 continue
-            string_items: str = strings[0].strip()
-            items: list = re.findall(items_regexp, string_items)
-            string_technologies: str = strings[1].strip()
-            technologies: list = re.findall(technologies_regexp, string_technologies)
-            answer = self.__prolog_wrapper.make_query(raw_string)
-            print(list(answer))
+            items: list = self.__parsing_items(strings[0].strip())
+            if items is None:
+                print("Формат ввода неправильный, повторите ввод...")
+                continue
+
+            if len(strings) == 2:
+                technologies: list = self.__parsing_technologies(strings[1].strip())
+                if technologies is None:
+                    print("Формат ввода неправильный, повторите ввод...")
+                    continue
+            else:
+                technologies: list = []
 
 
 def main():
