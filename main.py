@@ -11,7 +11,7 @@ def initial_knowledge_base() -> pl.KnowledgeBase:
 
         "fuel(wood).",
         "fuel(coal).",
-        "fuel(X): - ingredient(wood, X).",
+        "fuel(X) :- ingredient(wood, X).",
 
         "item(copper_plate).",
         "item(iron_plate).",
@@ -49,10 +49,10 @@ def initial_knowledge_base() -> pl.KnowledgeBase:
         "technology_relation(wall, wall_technology).",
         "technology_relation(gun_turret, turrets_technology).",
 
-        "starting_craft_item(X): - item(X),  \\+ technology_relation(X, _).",
-        "studied_craft_item(X): - technology_relation(X, Y), studied(Y).",
-        "craftable_item(X): - starting_craft_item(X); studied_craft_item(X).",
-        "unstadied_craft_item(X): - technology_relation(X, Y),  \\+ studied(Y)."
+        "starting_craft_item(X) :- item(X),  \\+ technology_relation(X, _).",
+        "studied_craft_item(X) :- technology_relation(X, Y), studied(Y).",
+        "craftable_item(X) :- starting_craft_item(X); studied_craft_item(X).",
+        "unstadied_craft_item(X) :- technology_relation(X, Y),  \\+ studied(Y)."
     ])
     return kbase
 
@@ -64,6 +64,7 @@ class KBaseWrapper:
             "железная руда": "iron_ore",
             "дерево": "wood",
             "камень": "stone",
+            "уголь": "coal",
             "медная плита": "copper_plate",
             "железная плита": "iron_plate",
             "кирпич": "stone_brick",
@@ -84,6 +85,8 @@ class KBaseWrapper:
         self.__kbase = kbase
         self.__raw_ingredients: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
                                                [x['X.'] for x in self.make_query('raw_ingredient(X).')]])
+        self.__fuels: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
+                                            [x['X.'] for x in self.make_query('fuel(X).')]])
         self.__items: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
                                                [x['X.'] for x in self.make_query('item(X).')]])
         self.__technologies: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
@@ -122,9 +125,9 @@ class Console:
         Изучив технологию, ты сможешь скрафтить ...
         Я хочу что-то сделать из: ...; У меня изучены технологии ...
         """
-        print()
         while string != "exit":
-            print(f"Введено {string}")
+            answer = self.__kbase_wrapper.make_query(string)
+            print(answer)
             string: str = input("Введите запрос...\n")
 
 
