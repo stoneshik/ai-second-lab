@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 from pyswip import Prolog
 
 import re
+
 
 class PrologWrapper:
     def __init__(self, prolog: Prolog):
@@ -30,11 +32,11 @@ class PrologWrapper:
                                           zip(self.__russifier.keys(), self.__russifier.values())}
         self.__prolog = prolog
         self.__raw_ingredients: tuple = tuple([self.__russifier_inverse[key] for key in
-                                            [x['X'] for x in self.make_query('raw_ingredient(X).')]])
+                                               [x['X'] for x in self.make_query('raw_ingredient(X).')]])
         self.__fuels: tuple = tuple([self.__russifier_inverse[key] for key in
-                                            [x['X'] for x in self.make_query('fuel(X).')]])
+                                     [x['X'] for x in self.make_query('fuel(X).')]])
         self.__items: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
-                                            [x['X'] for x in self.make_query('item(X).')]])
+                                     [x['X'] for x in self.make_query('item(X).')]])
         self.__technologies: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
                                             [x['X'] for x in self.make_query('technology(X).')]])
         self.__info_string: str = self.__compile_info_string()
@@ -53,14 +55,29 @@ class PrologWrapper:
             "Предметы, которые можно скрафтить:\n" + ", ".join(self.__items) + "\n" + \
             "Технологии:\n" + ", ".join(self.__technologies)
 
+    def get_value_from_russifier(self, russifier_key: str) -> str:
+        return self.__russifier[russifier_key]
+
     def make_query(self, query_string: str) -> [list, None]:
         return self.__prolog.query(query_string)
 
     def is_key_string_in_russifier(self, key_string) -> bool:
         return key_string in self.__russifier.keys()
 
+    def is_it_raw_ingredients(self, value: str) -> bool:
+        return value in self.__raw_ingredients
 
-class Console:
+    def is_it_fuel(self, value: str) -> bool:
+        return value in self.__fuels
+
+    def is_it_item(self, value: str) -> bool:
+        return value in self.__items
+
+    def is_it_technology(self, value: str) -> bool:
+        return value in self.__technologies
+
+
+class ConsoleHandler:
     def __init__(self, prolog_wrapper: PrologWrapper):
         self.__prolog_wrapper: PrologWrapper = prolog_wrapper
 
@@ -90,7 +107,14 @@ class Console:
         return [technology for technology in technologies
                 if not self.__prolog_wrapper.is_key_string_in_russifier(technology)]
 
-    def io(self):
+    def __input_handling(self, items: list, technologies: list) -> None:
+        raw_ingredients: list = [item for item in items if self.__prolog_wrapper.is_it_raw_ingredients(item)]
+        fuels: list = [item for item in items if self.__prolog_wrapper.is_it_fuel(item)]
+        if len(raw_ingredients) > 0 and len(fuels) > 0:
+            smelting: list = self.__prolog_wrapper.make_query(f"smelting({self.__prolog_wrapper.get_value_from_russifier(raw_ingredients[0])}, X).")
+            print(', '.join(smelting))
+
+    def input(self):
         """
         Шаблоны запросов
         У меня есть: ... топливо + сырой материал -> жарка
@@ -133,17 +157,18 @@ class Console:
                     self.__show_error_message(
                         f"Ошибка в следующих названиях: {', '.join(wrong_items)}{', '.join(wrong_technologies)}"
                     )
+            self.__input_handling(items, technologies)
 
 
 def main():
     prolog: Prolog = Prolog()
     prolog.consult('first.pl')
     prolog_wrapper: PrologWrapper = PrologWrapper(prolog)
-    console: Console = Console(prolog_wrapper)
-    console.io()
+    console: ConsoleHandler = ConsoleHandler(prolog_wrapper)
+    console.input()
 
 
 if __name__ == '__main__':
     main()
 
-#if item not in self.__prolog_wrapper.is_key_string_in_russifier(item)
+# if item not in self.__prolog_wrapper.is_key_string_in_russifier(item)
