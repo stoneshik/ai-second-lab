@@ -30,11 +30,11 @@ class PrologWrapper:
                                           zip(self.__russifier.keys(), self.__russifier.values())}
         self.__prolog = prolog
         self.__raw_ingredients: tuple = tuple([self.__russifier_inverse[key] for key in
-                                               [x['X'] for x in self.make_query('raw_ingredient(X).')]])
+                                            [x['X'] for x in self.make_query('raw_ingredient(X).')]])
         self.__fuels: tuple = tuple([self.__russifier_inverse[key] for key in
-                                     [x['X'] for x in self.make_query('fuel(X).')]])
+                                            [x['X'] for x in self.make_query('fuel(X).')]])
         self.__items: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
-                                     [x['X'] for x in self.make_query('item(X).')]])
+                                            [x['X'] for x in self.make_query('item(X).')]])
         self.__technologies: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
                                             [x['X'] for x in self.make_query('technology(X).')]])
         self.__info_string: str = self.__compile_info_string()
@@ -64,7 +64,8 @@ class Console:
     def __init__(self, prolog_wrapper: PrologWrapper):
         self.__prolog_wrapper: PrologWrapper = prolog_wrapper
 
-    def __show_error_message(self, message: str) -> None:
+    @staticmethod
+    def __show_error_message(message: str) -> None:
         print(message)
         print("Формат ввода неправильный, повторите ввод...")
 
@@ -83,12 +84,11 @@ class Console:
         return technologies
 
     def __finding_wrong_item_names(self, items: list) -> list:
-        return [item for item in items
-                if item not in self.__prolog_wrapper.is_key_string_in_russifier(item)]
+        return [item for item in items if not self.__prolog_wrapper.is_key_string_in_russifier(item)]
 
     def __finding_wrong_technology_names(self, technologies: list) -> list:
         return [technology for technology in technologies
-                if technology not in self.__prolog_wrapper.is_key_string_in_russifier(technology)]
+                if not self.__prolog_wrapper.is_key_string_in_russifier(technology)]
 
     def io(self):
         """
@@ -125,9 +125,14 @@ class Console:
             wrong_items: list = self.__finding_wrong_item_names(items)
             wrong_technologies: list = self.__finding_wrong_technology_names(technologies)
             if len(wrong_items) > 0 or len(wrong_technologies) > 0:
-                self.__show_error_message(
-                    f"Ошибка в следующих названиях {', '.join(wrong_items)}{', '.join(wrong_technologies)}"
-                )
+                if len(wrong_items) > 0 and len(wrong_technologies) > 0:
+                    self.__show_error_message(
+                        f"Ошибка в следующих названиях: {', '.join(wrong_items)}, {', '.join(wrong_technologies)}"
+                    )
+                else:
+                    self.__show_error_message(
+                        f"Ошибка в следующих названиях: {', '.join(wrong_items)}{', '.join(wrong_technologies)}"
+                    )
 
 
 def main():
@@ -140,3 +145,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+#if item not in self.__prolog_wrapper.is_key_string_in_russifier(item)
