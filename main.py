@@ -135,7 +135,16 @@ class ConsoleHandler:
                     find_crafts[craft_item] = ingredients
         return find_crafts
 
-    def __input_handling(self, entities_in_russian: list, technologies_in_russian: list) -> None:
+    def __check_crafts_by_technology(self, find_crafts: dict, technologies_studied: list) -> dict:
+        checking_find_crafts: dict = {}
+        for find_craft, ingredients in find_crafts.items():
+            technology_found: list = [i['X'] for i in
+                                      self.__prolog_wrapper.make_query(f"technology_relation({find_craft}, X).")]
+            if len(technology_found) < 1 or technology_found[0] in technologies_studied:
+                checking_find_crafts[find_craft] = ingredients
+        return checking_find_crafts
+
+    def __input_handling(self, entities_in_russian: list, technologies_studied_in_russian: list) -> None:
         raw_ingredients_in_russian: list = [item for item in entities_in_russian
                                             if self.__prolog_wrapper.is_it_raw_ingredient_in_russian(item)]
         fuels_in_russian: list = [item for item in entities_in_russian
@@ -160,7 +169,12 @@ class ConsoleHandler:
             smelting_results_in_russian: list = []
         items_in_russian: list = [entity for entity in entities_in_russian
                                   if self.__prolog_wrapper.is_it_item_in_russian(entity)]
+        technologies_studied_in_english: list = [self.__prolog_wrapper.get_entity_by_key_in_russian(technology)
+                                                 for technology in technologies_studied_in_russian]
         find_crafts: dict = self.__find_crafts(items_in_russian)
+        find_crafts_checked_by_technology: dict = self.__check_crafts_by_technology(
+            find_crafts, technologies_studied_in_english
+        )
         l = 0
 
 
