@@ -52,7 +52,7 @@ class PrologWrapper:
     def __compile_info_string(self) -> str:
         return "Начальные ресурсы:\n" + ", ".join(self.__raw_ingredients_in_russian) + "\n" + \
             "Предметы, которые можно использовать как топливо:\n" + ", ".join(self.__fuels_in_russian) + "\n" + \
-            "Предметы, которые можно скрафтить:\n" + ", ".join(self.__items_in_russian) + "\n" + \
+            "Предметы, которые можно получить:\n" + ", ".join(self.__items_in_russian) + "\n" + \
             "Технологии:\n" + ", ".join(self.__technologies_in_russian)
 
     def get_entity_by_key_in_russian(self, key_in_russian: str) -> str:
@@ -144,6 +144,40 @@ class ConsoleHandler:
                 checking_find_crafts[find_craft] = ingredients
         return checking_find_crafts
 
+    def __find_craft_iter(self, items_in_russian: list, technologies_studied_in_english: list) -> None:
+        find_crafts: dict = self.__find_crafts(items_in_russian)
+        if len(find_crafts) < 1:
+            print("Ничего скрафтить нельзя\n")
+            return
+        find_crafts_checked_by_technology: dict = self.__check_crafts_by_technology(
+            find_crafts, technologies_studied_in_english
+        )
+        result_string_find_crafts: str = "".join(
+            [
+                ", ".join(
+                    [self.__prolog_wrapper.get_entity_by_key_in_english(ingredient) for ingredient in ingredients])
+                + " -> " + self.__prolog_wrapper.get_entity_by_key_in_english(find_craft) + "\n"
+                for find_craft, ingredients in find_crafts_checked_by_technology.items()
+            ]
+        )
+        if len(find_crafts_checked_by_technology) > 0:
+            print(f"Доступные крафты:\n{result_string_find_crafts}")
+        difference_find_craft: dict = {find_craft: find_crafts[find_craft] for find_craft in
+                                       set(find_crafts).difference(find_crafts_checked_by_technology)}
+        result_string_difference: str = ''.join(
+            [
+                ", ".join(
+                    [self.__prolog_wrapper.get_entity_by_key_in_english(ingredient) for ingredient in ingredients])
+                + " -> " + self.__prolog_wrapper.get_entity_by_key_in_english(find_craft) + " | " +
+                self.__prolog_wrapper.get_entity_by_key_in_english(
+                    list(self.__prolog_wrapper.make_query(f'technology_relation({find_craft}, X)'))[0]['X']
+                ) + "\n"
+                for find_craft, ingredients in difference_find_craft.items()
+            ]
+        )
+        if len(difference_find_craft) > 0:
+            print(f"После изучения нужных технологий можно будет скрафтить:\n{result_string_difference}")
+
     def __input_handling(self, entities_in_russian: list, technologies_studied_in_russian: list) -> None:
         raw_ingredients_in_russian: list = [item for item in entities_in_russian
                                             if self.__prolog_wrapper.is_it_raw_ingredient_in_russian(item)]
@@ -159,43 +193,21 @@ class ConsoleHandler:
             smelting_results_in_russian: list = [
                 self.__prolog_wrapper.get_entity_by_key_in_english(item) for item in smelting_results_in_english
             ]
-            result_string: str = ', '.join(
+            result_string: str = ''.join(
                 [f"{raw_ingredient} -> {smelting_result}\n" for raw_ingredient, smelting_result in
                  zip(raw_ingredients_in_russian, smelting_results_in_russian)]
             )
             print(f"Можно получить при помощи плавки:\n{result_string}")
         else:
-            smelting_results_in_english: list = []
             smelting_results_in_russian: list = []
         items_in_russian: list = [entity for entity in entities_in_russian
                                   if self.__prolog_wrapper.is_it_item_in_russian(entity)]
         technologies_studied_in_english: list = [self.__prolog_wrapper.get_entity_by_key_in_russian(technology)
                                                  for technology in technologies_studied_in_russian]
-        find_crafts: dict = self.__find_crafts(items_in_russian)
-        find_crafts_checked_by_technology: dict = self.__check_crafts_by_technology(
-            find_crafts, technologies_studied_in_english
-        )
-        result_string_find_crafts: str = "".join(
-            [
-                ", ".join([self.__prolog_wrapper.get_entity_by_key_in_english(ingredient) for ingredient in ingredients])
-                + " -> " + self.__prolog_wrapper.get_entity_by_key_in_english(find_craft) + "\n"
-                for find_craft, ingredients in find_crafts_checked_by_technology.items()
-            ]
-        )
-        print(f"Можно скрафтить:\n{result_string_find_crafts}")
-        difference_find_craft: dict = {find_craft: find_crafts[find_craft] for find_craft in
-                                       set(find_crafts).difference(find_crafts_checked_by_technology)}
-        result_string_difference: str = ''.join(
-            [
-                ", ".join([self.__prolog_wrapper.get_entity_by_key_in_english(ingredient) for ingredient in ingredients])
-                + " -> " + self.__prolog_wrapper.get_entity_by_key_in_english(find_craft) + " | " +
-                self.__prolog_wrapper.get_entity_by_key_in_english(
-                    list(self.__prolog_wrapper.make_query(f'technology_relation({find_craft}, X)'))[0]['X']
-                ) + "\n"
-                for find_craft, ingredients in difference_find_craft.items()
-            ]
-        )
-        print(f"После изучений нужных технологий можно будет скрафтить:\n{result_string_difference}")
+        self.__find_craft_iter(items_in_russian, technologies_studied_in_english)
+        if len(smelting_results_in_russian) > 0:
+            print("Из переплавленных материалов, можно скрафтить:")
+            self.__find_craft_iter(smelting_results_in_russian, technologies_studied_in_english)
 
     def input(self):
         """
