@@ -122,8 +122,17 @@ class ConsoleHandler:
         }
         find_crafts: dict = {}
         inaccessible_crafts: list = []
-        for ingredient, craft_item in possible_crafts.items():
-            ingredients: list = [i['X'] for i in self.__prolog_wrapper.make_query(f"ingredient(X, {craft_item}).")]
+        for craft_items in possible_crafts.values():
+            for craft_item in craft_items:
+                if craft_item in inaccessible_crafts or craft_item in find_crafts.keys():
+                    break
+                ingredients: list = [i['X'] for i in self.__prolog_wrapper.make_query(f"ingredient(X, {craft_item}).")]
+                for ingredient in ingredients:
+                    if ingredient not in items_in_english:
+                        inaccessible_crafts.append(ingredient)
+                        break
+                else:
+                    find_crafts[craft_item] = ingredients
         return find_crafts
 
     def __input_handling(self, entities_in_russian: list, technologies_in_russian: list) -> None:
