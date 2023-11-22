@@ -175,8 +175,27 @@ class ConsoleHandler:
         find_crafts_checked_by_technology: dict = self.__check_crafts_by_technology(
             find_crafts, technologies_studied_in_english
         )
-        l = 0
-
+        result_string_find_crafts: str = "".join(
+            [
+                ", ".join([self.__prolog_wrapper.get_entity_by_key_in_english(ingredient) for ingredient in ingredients])
+                + " -> " + self.__prolog_wrapper.get_entity_by_key_in_english(find_craft) + "\n"
+                for find_craft, ingredients in find_crafts_checked_by_technology.items()
+            ]
+        )
+        print(f"Можно скрафтить:\n{result_string_find_crafts}")
+        difference_find_craft: dict = {find_craft: find_crafts[find_craft] for find_craft in
+                                       set(find_crafts).difference(find_crafts_checked_by_technology)}
+        result_string_difference: str = ''.join(
+            [
+                ", ".join([self.__prolog_wrapper.get_entity_by_key_in_english(ingredient) for ingredient in ingredients])
+                + " -> " + self.__prolog_wrapper.get_entity_by_key_in_english(find_craft) + " | " +
+                self.__prolog_wrapper.get_entity_by_key_in_english(
+                    list(self.__prolog_wrapper.make_query(f'technology_relation({find_craft}, X)'))[0]['X']
+                ) + "\n"
+                for find_craft, ingredients in difference_find_craft.items()
+            ]
+        )
+        print(f"После изучений нужных технологий можно будет скрафтить:\n{result_string_difference}")
 
     def input(self):
         """
@@ -196,17 +215,17 @@ class ConsoleHandler:
                 return
             strings: list = raw_string.split(';')
             if len(strings) > 2:
-                self.__show_error_message('Использовано несколько точек с запятой')
+                self.__show_error_message("Использовано несколько точек с запятой")
                 continue
             entities_in_russian: list = self.__parsing_items(strings[0].strip())
             if entities_in_russian is None:
-                self.__show_error_message('Ошибка в первой части строки')
+                self.__show_error_message("Ошибка в первой части строки")
                 continue
 
             if len(strings) == 2:
                 technologies_in_russian: list = self.__parsing_technologies(strings[1].strip())
                 if technologies_in_russian is None:
-                    self.__show_error_message('Ошибка во второй части строки')
+                    self.__show_error_message("Ошибка во второй части строки")
                     continue
             else:
                 technologies_in_russian: list = []
