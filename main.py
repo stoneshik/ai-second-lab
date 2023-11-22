@@ -152,8 +152,8 @@ class ConsoleHandler:
         print(self.__prolog_wrapper.info_string)
         print("Формат запроса:\nУ меня есть: первый предмет, второй предмет; Изучены технологии: технология")
         while True:
-            raw_string: str = input("Введите запрос (чтобы завершить работу введите exit)...\n").strip()
-            if raw_string == "exit":
+            raw_string: str = input("Введите запрос (чтобы завершить работу введите выход)...\n").strip()
+            if raw_string == "выход":
                 return
             strings: list = raw_string.split(';')
             if len(strings) > 2:
@@ -182,6 +182,7 @@ class ConsoleHandler:
                     self.__show_error_message(
                         f"Ошибка в следующих названиях: {', '.join(wrong_entities)}{', '.join(wrong_technologies)}"
                     )
+                continue
             self.__input_handling(entities_in_russian, technologies_in_russian)
 
 
