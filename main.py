@@ -6,7 +6,7 @@ import re
 
 class PrologWrapper:
     def __init__(self, prolog: Prolog):
-        self.__russifier: dict = {
+        self.__entities_in_russian: dict = {
             "медная руда": "copper_ore",
             "железная руда": "iron_ore",
             "дерево": "wood",
@@ -28,18 +28,18 @@ class PrologWrapper:
             "технология стен": "wall_technology",
             "технология туррелей": "turrets_technology",
         }
-        self.__russifier_inverse: dict = {value: key for key, value in
-                                          zip(self.__russifier.keys(), self.__russifier.values())}
+        self.__entities_in_english: dict = {value: key for key, value in
+                                            zip(self.__entities_in_russian.keys(), self.__entities_in_russian.values())}
         self.__prolog = prolog
-        self.__raw_ingredients: tuple = tuple([self.__russifier_inverse[key] for key in
-                                               [x['X'] for x in self.make_query('raw_ingredient(X).')]])
-        self.__fuels: tuple = tuple([self.__russifier_inverse[key] for key in
-                                     [x['X'] for x in self.make_query('fuel(X).')]])
-        self.__items: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
-                                     [x['X'] for x in self.make_query('item(X).')]])
-        self.__technologies: tuple = tuple([self.__russifier_inverse[key.strip('.')] for key in
-                                            [x['X'] for x in self.make_query('technology(X).')]])
-        self.__info_string: str = self.__compile_info_string()
+        self.__raw_ingredients_in_russian: tuple = tuple([self.__entities_in_english[key] for key in
+                                                          [x['X'] for x in self.make_query('raw_ingredient(X).')]])
+        self.__fuels_in_russian: tuple = tuple([self.__entities_in_english[key] for key in
+                                                [x['X'] for x in self.make_query('fuel(X).')]])
+        self.__items_in_russian: tuple = tuple([self.__entities_in_english[key.strip('.')] for key in
+                                                [x['X'] for x in self.make_query('item(X).')]])
+        self.__technologies_in_russian: tuple = tuple([self.__entities_in_english[key.strip('.')] for key in
+                                                       [x['X'] for x in self.make_query('technology(X).')]])
+        self.__info_string_in_russian: str = self.__compile_info_string()
 
     @property
     def prolog(self) -> Prolog:
@@ -47,37 +47,37 @@ class PrologWrapper:
 
     @property
     def info_string(self) -> str:
-        return self.__info_string
+        return self.__info_string_in_russian
 
     def __compile_info_string(self) -> str:
-        return "Начальные ресурсы:\n" + ", ".join(self.__raw_ingredients) + "\n" + \
-            "Предметы, которые можно использовать как топливо:\n" + ", ".join(self.__fuels) + "\n" + \
-            "Предметы, которые можно скрафтить:\n" + ", ".join(self.__items) + "\n" + \
-            "Технологии:\n" + ", ".join(self.__technologies)
+        return "Начальные ресурсы:\n" + ", ".join(self.__raw_ingredients_in_russian) + "\n" + \
+            "Предметы, которые можно использовать как топливо:\n" + ", ".join(self.__fuels_in_russian) + "\n" + \
+            "Предметы, которые можно скрафтить:\n" + ", ".join(self.__items_in_russian) + "\n" + \
+            "Технологии:\n" + ", ".join(self.__technologies_in_russian)
 
-    def get_value_from_russifier(self, russifier_key: str) -> str:
-        return self.__russifier[russifier_key]
+    def get_entity_by_key_in_russian(self, key_in_russian: str) -> str:
+        return self.__entities_in_russian[key_in_russian]
 
-    def get_value_from_russifier_inverse(self, russifier_key: str) -> str:
-        return self.__russifier_inverse[russifier_key]
+    def get_entity_by_key_in_english(self, key_in_english: str) -> str:
+        return self.__entities_in_english[key_in_english]
 
     def make_query(self, query_string: str) -> [list, None]:
         return self.__prolog.query(query_string)
 
-    def is_key_string_in_russifier(self, key_string) -> bool:
-        return key_string in self.__russifier.keys()
+    def is_key_string_in_russian_entity(self, key_string_in_russian) -> bool:
+        return key_string_in_russian in self.__entities_in_russian.keys()
 
-    def is_it_raw_ingredients(self, value: str) -> bool:
-        return value in self.__raw_ingredients
+    def is_it_raw_ingredient_in_russian(self, value_in_russian: str) -> bool:
+        return value_in_russian in self.__raw_ingredients_in_russian
 
-    def is_it_fuel(self, value: str) -> bool:
-        return value in self.__fuels
+    def is_it_fuel_in_russian(self, value_in_russian: str) -> bool:
+        return value_in_russian in self.__fuels_in_russian
 
-    def is_it_item(self, value: str) -> bool:
-        return value in self.__items
+    def is_it_item_in_russian(self, value_in_russian: str) -> bool:
+        return value_in_russian in self.__items_in_russian
 
-    def is_it_technology(self, value: str) -> bool:
-        return value in self.__technologies
+    def is_it_technology_in_russian(self, value_in_russian: str) -> bool:
+        return value_in_russian in self.__technologies_in_russian
 
 
 class ConsoleHandler:
@@ -103,36 +103,39 @@ class ConsoleHandler:
         technologies: list = [string.strip() for string in string_technologies.split(':')[1].strip().split(',')]
         return technologies
 
-    def __finding_wrong_item_names(self, items: list) -> list:
-        return [item for item in items if not self.__prolog_wrapper.is_key_string_in_russifier(item)]
+    def __finding_wrong_entites_names(self, entities_in_russian: list) -> list:
+        return [entity for entity in entities_in_russian
+                if not self.__prolog_wrapper.is_key_string_in_russian_entity(entity) or
+                self.__prolog_wrapper.is_it_technology_in_russian(entity)]
 
     def __finding_wrong_technology_names(self, technologies: list) -> list:
         return [technology for technology in technologies
-                if not self.__prolog_wrapper.is_key_string_in_russifier(technology)]
+                if not self.__prolog_wrapper.is_it_technology_in_russian(technology)]
 
-    def __input_handling(self, items: list, technologies: list) -> None:
-        raw_ingredients_in_russian: list = [item for item in items if self.__prolog_wrapper.is_it_raw_ingredients(item)]
-        fuels_in_russian: list = [item for item in items if self.__prolog_wrapper.is_it_fuel(item)]
+    def __input_handling(self, entities_in_russian: list, technologies_in_russian: list) -> None:
+        raw_ingredients_in_russian: list = [item for item in entities_in_russian
+                                            if self.__prolog_wrapper.is_it_raw_ingredient_in_russian(item)]
+        fuels_in_russian: list = [item for item in entities_in_russian
+                                  if self.__prolog_wrapper.is_it_fuel_in_russian(item)]
         if len(raw_ingredients_in_russian) > 0 and len(fuels_in_russian) > 0:
-            smelting: list = [
+            smelting_results: list = [
                 list(self.__prolog_wrapper.make_query(
-                    f"smelting({self.__prolog_wrapper.get_value_from_russifier(raw_ingredient)}, X)."
+                    f"smelting({self.__prolog_wrapper.get_entity_by_key_in_russian(raw_ingredient)}, X)."
                 ))[0]['X']
                 for raw_ingredient in raw_ingredients_in_russian
             ]
-            smelting_in_russian: list = [
-                self.__prolog_wrapper.get_value_from_russifier_inverse(item) for item in smelting
+            smelting_results_in_russian: list = [
+                self.__prolog_wrapper.get_entity_by_key_in_english(item) for item in smelting_results
             ]
             result_string: str = ', '.join(
                 [f"{raw_ingredient} -> {smelting_result}\n" for raw_ingredient, smelting_result in
-                 zip(raw_ingredients_in_russian, smelting_in_russian)]
+                 zip(raw_ingredients_in_russian, smelting_results_in_russian)]
             )
             print(f"Можно получить при помощи плавки:\n{result_string}")
         else:
-            smelting: list = []
-        r = list(self.__prolog_wrapper.make_query(
-            f"ingredient({smelting[0]}, X)."
-        ))
+            smelting_results: list = []
+        items: list = [self.__prolog_wrapper.get_entity_by_key_in_russian(item) for item in entities_in_russian]
+        r = {item: list(self.__prolog_wrapper.make_query(f"ingredient({item}, X).")) for item in items}
         l = 0
 
 
@@ -156,30 +159,30 @@ class ConsoleHandler:
             if len(strings) > 2:
                 self.__show_error_message('Использовано несколько точек с запятой')
                 continue
-            items: list = self.__parsing_items(strings[0].strip())
-            if items is None:
+            entities_in_russian: list = self.__parsing_items(strings[0].strip())
+            if entities_in_russian is None:
                 self.__show_error_message('Ошибка в первой части строки')
                 continue
 
             if len(strings) == 2:
-                technologies: list = self.__parsing_technologies(strings[1].strip())
-                if technologies is None:
+                technologies_in_russian: list = self.__parsing_technologies(strings[1].strip())
+                if technologies_in_russian is None:
                     self.__show_error_message('Ошибка во второй части строки')
                     continue
             else:
-                technologies: list = []
-            wrong_items: list = self.__finding_wrong_item_names(items)
-            wrong_technologies: list = self.__finding_wrong_technology_names(technologies)
-            if len(wrong_items) > 0 or len(wrong_technologies) > 0:
-                if len(wrong_items) > 0 and len(wrong_technologies) > 0:
+                technologies_in_russian: list = []
+            wrong_entities: list = self.__finding_wrong_entites_names(entities_in_russian)
+            wrong_technologies: list = self.__finding_wrong_technology_names(technologies_in_russian)
+            if len(wrong_entities) > 0 or len(wrong_technologies) > 0:
+                if len(wrong_entities) > 0 and len(wrong_technologies) > 0:
                     self.__show_error_message(
-                        f"Ошибка в следующих названиях: {', '.join(wrong_items)}, {', '.join(wrong_technologies)}"
+                        f"Ошибка в следующих названиях: {', '.join(wrong_entities)}, {', '.join(wrong_technologies)}"
                     )
                 else:
                     self.__show_error_message(
-                        f"Ошибка в следующих названиях: {', '.join(wrong_items)}{', '.join(wrong_technologies)}"
+                        f"Ошибка в следующих названиях: {', '.join(wrong_entities)}{', '.join(wrong_technologies)}"
                     )
-            self.__input_handling(items, technologies)
+            self.__input_handling(entities_in_russian, technologies_in_russian)
 
 
 def main():
