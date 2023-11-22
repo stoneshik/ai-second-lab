@@ -58,6 +58,9 @@ class PrologWrapper:
     def get_value_from_russifier(self, russifier_key: str) -> str:
         return self.__russifier[russifier_key]
 
+    def get_value_from_russifier_inverse(self, russifier_key: str) -> str:
+        return self.__russifier_inverse[russifier_key]
+
     def make_query(self, query_string: str) -> [list, None]:
         return self.__prolog.query(query_string)
 
@@ -108,11 +111,30 @@ class ConsoleHandler:
                 if not self.__prolog_wrapper.is_key_string_in_russifier(technology)]
 
     def __input_handling(self, items: list, technologies: list) -> None:
-        raw_ingredients: list = [item for item in items if self.__prolog_wrapper.is_it_raw_ingredients(item)]
-        fuels: list = [item for item in items if self.__prolog_wrapper.is_it_fuel(item)]
-        if len(raw_ingredients) > 0 and len(fuels) > 0:
-            smelting: list = self.__prolog_wrapper.make_query(f"smelting({self.__prolog_wrapper.get_value_from_russifier(raw_ingredients[0])}, X).")
-            print(', '.join(smelting))
+        raw_ingredients_in_russian: list = [item for item in items if self.__prolog_wrapper.is_it_raw_ingredients(item)]
+        fuels_in_russian: list = [item for item in items if self.__prolog_wrapper.is_it_fuel(item)]
+        if len(raw_ingredients_in_russian) > 0 and len(fuels_in_russian) > 0:
+            smelting: list = [
+                list(self.__prolog_wrapper.make_query(
+                    f"smelting({self.__prolog_wrapper.get_value_from_russifier(raw_ingredient)}, X)."
+                ))[0]['X']
+                for raw_ingredient in raw_ingredients_in_russian
+            ]
+            smelting_in_russian: list = [
+                self.__prolog_wrapper.get_value_from_russifier_inverse(item) for item in smelting
+            ]
+            result_string: str = ', '.join(
+                [f"{raw_ingredient} -> {smelting_result}\n" for raw_ingredient, smelting_result in
+                 zip(raw_ingredients_in_russian, smelting_in_russian)]
+            )
+            print(f"Можно получить при помощи плавки:\n{result_string}")
+        else:
+            smelting: list = []
+        r = list(self.__prolog_wrapper.make_query(
+            f"ingredient({smelting[0]}, X)."
+        ))
+        l = 0
+
 
     def input(self):
         """
