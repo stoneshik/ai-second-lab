@@ -184,12 +184,13 @@ class ConsoleHandler:
         fuels_in_russian: list = [item for item in entities_in_russian
                                   if self.__prolog_wrapper.is_it_fuel_in_russian(item)]
         if len(raw_ingredients_in_russian) > 0 and len(fuels_in_russian) > 0:
-            smelting_results_in_english: list = [
-                list(self.__prolog_wrapper.make_query(
-                    f"smelting({self.__prolog_wrapper.get_entity_by_key_in_russian(raw_ingredient)}, X)."
-                ))[0]['X']
-                for raw_ingredient in raw_ingredients_in_russian
-            ]
+            smelting_results_in_english = []
+            for raw_ingredient in raw_ingredients_in_russian:
+                smelting_results: list = list(self.__prolog_wrapper.make_query(
+                        f"smelting({self.__prolog_wrapper.get_entity_by_key_in_russian(raw_ingredient)}, X)."
+                ))
+                if len(smelting_results) > 0:
+                    smelting_results_in_english.append(smelting_results[0]['X'])
             smelting_results_in_russian: list = [
                 self.__prolog_wrapper.get_entity_by_key_in_english(item) for item in smelting_results_in_english
             ]
