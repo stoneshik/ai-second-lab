@@ -112,20 +112,34 @@ class ConsoleHandler:
         return [technology for technology in technologies
                 if not self.__prolog_wrapper.is_it_technology_in_russian(technology)]
 
+    def __find_crafts(self, items_in_russian: list) -> dict:
+        items_in_english: list = [self.__prolog_wrapper.get_entity_by_key_in_russian(item) for item in items_in_russian]
+        possible_crafts: dict = {
+            item: [
+                i['X'] for i in self.__prolog_wrapper.make_query(f"ingredient({item}, X).")
+            ]
+            for item in items_in_english
+        }
+        find_crafts: dict = {}
+        inaccessible_crafts: list = []
+        for ingredient, craft_item in possible_crafts.items():
+            ingredients: list = [i['X'] for i in self.__prolog_wrapper.make_query(f"ingredient(X, {craft_item}).")]
+        return find_crafts
+
     def __input_handling(self, entities_in_russian: list, technologies_in_russian: list) -> None:
         raw_ingredients_in_russian: list = [item for item in entities_in_russian
                                             if self.__prolog_wrapper.is_it_raw_ingredient_in_russian(item)]
         fuels_in_russian: list = [item for item in entities_in_russian
                                   if self.__prolog_wrapper.is_it_fuel_in_russian(item)]
         if len(raw_ingredients_in_russian) > 0 and len(fuels_in_russian) > 0:
-            smelting_results: list = [
+            smelting_results_in_english: list = [
                 list(self.__prolog_wrapper.make_query(
                     f"smelting({self.__prolog_wrapper.get_entity_by_key_in_russian(raw_ingredient)}, X)."
                 ))[0]['X']
                 for raw_ingredient in raw_ingredients_in_russian
             ]
             smelting_results_in_russian: list = [
-                self.__prolog_wrapper.get_entity_by_key_in_english(item) for item in smelting_results
+                self.__prolog_wrapper.get_entity_by_key_in_english(item) for item in smelting_results_in_english
             ]
             result_string: str = ', '.join(
                 [f"{raw_ingredient} -> {smelting_result}\n" for raw_ingredient, smelting_result in
@@ -133,9 +147,11 @@ class ConsoleHandler:
             )
             print(f"Можно получить при помощи плавки:\n{result_string}")
         else:
-            smelting_results: list = []
-        items: list = [self.__prolog_wrapper.get_entity_by_key_in_russian(item) for item in entities_in_russian]
-        r = {item: list(self.__prolog_wrapper.make_query(f"ingredient({item}, X).")) for item in items}
+            smelting_results_in_english: list = []
+            smelting_results_in_russian: list = []
+        items_in_russian: list = [entity for entity in entities_in_russian
+                                  if self.__prolog_wrapper.is_it_item_in_russian(entity)]
+        find_crafts: dict = self.__find_crafts(items_in_russian)
         l = 0
 
 
