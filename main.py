@@ -184,19 +184,19 @@ class ConsoleHandler:
         fuels_in_russian: list = [item for item in entities_in_russian
                                   if self.__prolog_wrapper.is_it_fuel_in_russian(item)]
         if len(raw_ingredients_in_russian) > 0 and len(fuels_in_russian) > 0:
-            smelting_results_in_english = []
+            smelting_results_in_russian_dict: dict = {}
             for raw_ingredient in raw_ingredients_in_russian:
-                smelting_results: list = list(self.__prolog_wrapper.make_query(
+                smelting_results_in_russian_list: list = [
+                    self.__prolog_wrapper.get_entity_by_key_in_english(smelting_result['X']) for smelting_result
+                    in self.__prolog_wrapper.make_query(
                         f"smelting({self.__prolog_wrapper.get_entity_by_key_in_russian(raw_ingredient)}, X)."
-                ))
-                if len(smelting_results) > 0:
-                    smelting_results_in_english.append(smelting_results[0]['X'])
-            smelting_results_in_russian: list = [
-                self.__prolog_wrapper.get_entity_by_key_in_english(item) for item in smelting_results_in_english
-            ]
+                    )
+                ]
+                if len(smelting_results_in_russian_list) > 0:
+                    smelting_results_in_russian_dict[raw_ingredient] = smelting_results_in_russian_list[0]
             result_string: str = ''.join(
-                [f"{raw_ingredient} -> {smelting_result}\n" for raw_ingredient, smelting_result in
-                 zip(raw_ingredients_in_russian, smelting_results_in_russian)]
+                [f"{raw_ingredient} -> {smelting_result}\n" for raw_ingredient, smelting_result
+                 in smelting_results_in_russian_dict.items()]
             )
             print("============")
             print(f"Можно получить при помощи плавки:\n{result_string}")
@@ -209,13 +209,13 @@ class ConsoleHandler:
         print("============")
         print("Можно скрафтить из материалов, которые у вас есть:")
         self.__find_craft_iter(items_in_russian, technologies_studied_in_english)
-        if len(smelting_results_in_russian) > 0:
+        if len(smelting_results_in_russian_list) > 0:
             print("============")
             print("Из переплавленных материалов, можно скрафтить:")
-            self.__find_craft_iter(smelting_results_in_russian, technologies_studied_in_english)
+            self.__find_craft_iter(smelting_results_in_russian_list, technologies_studied_in_english)
             print("============")
             print("После переплавки материалов, вы сможете скрафтить:")
-            items_in_russian_and_smelting_results: list = smelting_results_in_russian.copy()
+            items_in_russian_and_smelting_results: list = smelting_results_in_russian_list.copy()
             items_in_russian_and_smelting_results.extend(items_in_russian)
             self.__find_craft_iter(items_in_russian_and_smelting_results, technologies_studied_in_english)
 
