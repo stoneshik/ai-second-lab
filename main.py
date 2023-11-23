@@ -129,7 +129,7 @@ class ConsoleHandler:
                 ingredients: list = [i['X'] for i in self.__prolog_wrapper.make_query(f"ingredient(X, {craft_item}).")]
                 for ingredient in ingredients:
                     if ingredient not in items_in_english:
-                        inaccessible_crafts.append(ingredient)
+                        inaccessible_crafts.append(craft_item)
                         break
                 else:
                     find_crafts[craft_item] = ingredients
@@ -212,7 +212,6 @@ class ConsoleHandler:
         if len(smelting_results_in_russian_dict) > 0:
             print("============")
             print("Из переплавленных материалов, можно скрафтить:")
-            l = list(smelting_results_in_russian_dict.keys())
             self.__find_craft_iter(list(smelting_results_in_russian_dict.values()), technologies_studied_in_english)
             print("============")
             print("После переплавки материалов, вы сможете скрафтить:")
