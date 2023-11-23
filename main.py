@@ -276,5 +276,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# if item not in self.__prolog_wrapper.is_key_string_in_russifier(item)
