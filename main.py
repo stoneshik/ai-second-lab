@@ -155,8 +155,8 @@ class ConsoleHandler:
         result_string_find_crafts: str = "".join(
             [
                 ", ".join(
-                    [self.__prolog_wrapper.get_entity_by_key_in_english(ingredient) for ingredient in ingredients])
-                + " -> " + self.__prolog_wrapper.get_entity_by_key_in_english(find_craft) + "\n"
+                    [self.__prolog_wrapper.get_entity_by_key_in_english(ingredient) for ingredient in ingredients]
+                ) + " -> " + self.__prolog_wrapper.get_entity_by_key_in_english(find_craft) + "\n"
                 for find_craft, ingredients in find_crafts_checked_by_technology.items()
             ]
         )
@@ -167,8 +167,8 @@ class ConsoleHandler:
         result_string_difference: str = ''.join(
             [
                 ", ".join(
-                    [self.__prolog_wrapper.get_entity_by_key_in_english(ingredient) for ingredient in ingredients])
-                + " -> " + self.__prolog_wrapper.get_entity_by_key_in_english(find_craft) + " | " +
+                    [self.__prolog_wrapper.get_entity_by_key_in_english(ingredient) for ingredient in ingredients]
+                ) + " -> " + self.__prolog_wrapper.get_entity_by_key_in_english(find_craft) + " | " +
                 self.__prolog_wrapper.get_entity_by_key_in_english(
                     list(self.__prolog_wrapper.make_query(f'technology_relation({find_craft}, X)'))[0]['X']
                 ) + "\n"
@@ -198,6 +198,7 @@ class ConsoleHandler:
                 [f"{raw_ingredient} -> {smelting_result}\n" for raw_ingredient, smelting_result in
                  zip(raw_ingredients_in_russian, smelting_results_in_russian)]
             )
+            print("============")
             print(f"Можно получить при помощи плавки:\n{result_string}")
         else:
             smelting_results_in_russian: list = []
@@ -205,10 +206,18 @@ class ConsoleHandler:
                                   if self.__prolog_wrapper.is_it_item_in_russian(entity)]
         technologies_studied_in_english: list = [self.__prolog_wrapper.get_entity_by_key_in_russian(technology)
                                                  for technology in technologies_studied_in_russian]
+        print("============")
+        print("Можно скрафтить из материалов, которые у вас есть:")
         self.__find_craft_iter(items_in_russian, technologies_studied_in_english)
         if len(smelting_results_in_russian) > 0:
+            print("============")
             print("Из переплавленных материалов, можно скрафтить:")
             self.__find_craft_iter(smelting_results_in_russian, technologies_studied_in_english)
+            print("============")
+            print("После переплавки материалов, вы сможете скрафтить:")
+            items_in_russian_and_smelting_results: list = smelting_results_in_russian.copy()
+            items_in_russian_and_smelting_results.extend(items_in_russian)
+            self.__find_craft_iter(items_in_russian_and_smelting_results, technologies_studied_in_english)
 
     def input(self):
         """
